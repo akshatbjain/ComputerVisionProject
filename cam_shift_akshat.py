@@ -30,7 +30,7 @@ cv2.setMouseCallback('Camshift', get_roi)
 
 while(1):
     ret, img = cam.read()
-    cv2.imshow('No filter', img)
+    #cv2.imshow('No filter', img)
     #img = cv2.bilateralFilter(img,9,75,75)
     img = cv2.medianBlur(img,5)
     duplicate = img.copy()
@@ -63,7 +63,7 @@ while(1):
 
         for i in range(3):
             histr = cv2.calcHist([hsv],[i],None,[ranges[i][1]],ranges[i])
-            print histr.shape
+            #print histr.shape
             if i==0:
                 histrr = histr
             cv2.normalize(histr, histr, ranges[i][0], ranges[i][1], cv2.NORM_MINMAX);
@@ -72,7 +72,7 @@ while(1):
             thresh[i], max_value = max(enumerate(histr), key=operator.itemgetter(1))
 
             #thresh[i] = histr.index(max(histr))
-            print thresh[i]
+            #print thresh[i]
 
             #plt.plot(histr,color = color[i])
             #plt.xlim([0,256])
@@ -92,12 +92,19 @@ while(1):
 
         ret, track_window = cv2.CamShift(dst, track_window, term_crit)
         duplicate[opening == 0] = 0
+        print ret
+
+        if ret[1][0] >= ret[1][1]:
+            ret = (ret[0], (ret[1][0]*1.7, ret[1][1]*1.4), ret[2])
+        else:
+            ret = (ret[0], (ret[1][0]*1.3, ret[1][1]*1.7), ret[2])
 
         cv2.ellipse(img, ret, (0, 0, 255), 2)
+        #cv2.rectangle(img,(track_window[2],track_window[3]),(track_window[0],track_window[1]),(0,255,0),2)
 
-        cv2.imshow('Mask', mask)
-        cv2.imshow('Opening', opening)
-        cv2.imshow('track', duplicate)
+        #cv2.imshow('Mask', mask)
+        cv2.imshow('Object', opening)
+        #cv2.imshow('track', duplicate)
 
         k = cv2.waitKey(1) & 0xFF
         if(k==27):
