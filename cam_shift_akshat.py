@@ -35,7 +35,7 @@ while(1):
     img = cv2.medianBlur(img,5)
     duplicate = img.copy()
     hsv_img = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2HSV)
-    
+
     if Mode == 0:
 
         key = cv2.waitKey(1) & 0xFF
@@ -55,8 +55,10 @@ while(1):
         roi = duplicate[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
         cv2.imshow('ROI', roi)
 
+        track_window = (refPt[0][0], refPt[0][1], refPt[1][0], refPt[1][1])
+
         hsv = cv2.cvtColor(roi.copy(), cv2.COLOR_BGR2HSV)
-        
+
         color = ['b', 'g', 'r']
 
         for i in range(3):
@@ -88,15 +90,15 @@ while(1):
         opening = cv2.dilate(dilation,kernel,iterations = 3)
         dst = cv2.calcBackProject([hsv_img],[0],histrr,[0,180],1)
 
-        ret, track_window = cv2.CamShift(dst, (refPt[0][0], refPt[0][1], refPt[1][0], refPt[1][1]), term_crit)
+        ret, track_window = cv2.CamShift(dst, track_window, term_crit)
         duplicate[opening == 0] = 0
-        
+
         cv2.ellipse(img, ret, (0, 0, 255), 2)
-        
+
         cv2.imshow('Mask', mask)
         cv2.imshow('Opening', opening)
         cv2.imshow('track', duplicate)
-        
+
         k = cv2.waitKey(1) & 0xFF
         if(k==27):
             break
