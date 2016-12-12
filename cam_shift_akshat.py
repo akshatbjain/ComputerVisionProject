@@ -9,6 +9,7 @@ track_window = ()
 Mode = 0
 ranges = [[0, 180], [0, 255], [0, 255]]
 thresh = [0, 0, 0]
+kernel = np.ones((3,3),np.uint8)
 
 term_crit = ( cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1 )
 
@@ -17,11 +18,9 @@ def get_roi(event, x, y, flags, param):
 
     if event == cv2.EVENT_LBUTTONDOWN:
         refPt = [(x, y)]
-        #track_window.append(refPt[0][0], refPt[0][1])
 
     elif event == cv2.EVENT_LBUTTONUP:
         refPt.append((x, y))
-        #track_window.append(refPt[1][0], refPt[1][1])
 
         cv2.rectangle(img, refPt[0], refPt[1], (0, 255, 0), 2)
         cv2.imshow('Camshift', img)
@@ -31,9 +30,12 @@ cv2.setMouseCallback('Camshift', get_roi)
 
 while(1):
     ret, img = cam.read()
+    cv2.imshow('No filter', img)
+    #img = cv2.bilateralFilter(img,9,75,75)
+    img = cv2.medianBlur(img,5)
     duplicate = img.copy()
     hsv_img = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2HSV)
-    cv2.imshow('Camshift', img)
+    
     if Mode == 0:
 
         key = cv2.waitKey(1) & 0xFF
@@ -54,9 +56,7 @@ while(1):
         cv2.imshow('ROI', roi)
 
         hsv = cv2.cvtColor(roi.copy(), cv2.COLOR_BGR2HSV)
-        #mask = np.zeros((hsv.shape[0], hsv.shape[1]))
-        #mask = cv2.inRange(hsv, np.array((0., 60., 32.)), np.array((180., 255., 255.)))
-        #hist = cv2.calcHist([hsv], [0], None , [180], [0, 180])
+        
         color = ['b', 'g', 'r']
 
         for i in range(3):
@@ -77,28 +77,27 @@ while(1):
         #plt.show()
     if Mode == 1:
         #Creating arrays to store the min and max HSV ranges
-        lower = np.array([thresh[0]-20, thresh[1]-20, thresh[2]-50])
-        upper = np.array([thresh[0]+20, thresh[1]+20, thresh[2]+50])
+        lower = np.array([thresh[0]-30, thresh[1]-30, thresh[2]-40])
+        upper = np.array([thresh[0]+30, thresh[1]+30, thresh[2]+40])
 
         #Create binary mask of in range object
         mask = cv2.inRange(hsv_img, lower, upper)
+        #opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        erosion = cv2.erode(mask,kernel,iterations = 2)
+        dilation = cv2.dilate(erosion,kernel,iterations = 3)
+        opening = cv2.dilate(dilation,kernel,iterations = 3)
         dst = cv2.calcBackProject([hsv_img],[0],histrr,[0,180],1)
 
         ret, track_window = cv2.CamShift(dst, (refPt[0][0], refPt[0][1], refPt[1][0], refPt[1][1]), term_crit)
-        duplicate[mask == 0] = 0
-        print ret
-        cv2.ellipse(duplicate, ret, (0, 0, 255), 2)
-        #pts = cv2.boxPoints(ret)
-        #pts = np.int0(pts)
-        #img2 = cv2.polylines(frame,[pts],True, 255,2)
-        #cv2.imshow('img2',img2)
-        #Bitwise AND operation on orginal image using mask
-        #obj = cv2.bitwise_and(img, img, mask=mask)
-
+        duplicate[opening == 0] = 0
+        
+        cv2.ellipse(img, ret, (0, 0, 255), 2)
+        
         cv2.imshow('Mask', mask)
+        cv2.imshow('Opening', opening)
         cv2.imshow('track', duplicate)
-
-        #cv2.imshow('Object', obj)
+        
         k = cv2.waitKey(1) & 0xFF
         if(k==27):
             break
+    cv2.imshow('Camshift', img)
