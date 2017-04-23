@@ -1,6 +1,6 @@
-# ComputerVisionProject
+# Object Detection using Computer Vision
 
-This project presents the comparision of 4 techniques used for detecting a "Leprechaun soft toy" as a part of the Computer Vision course at Worcester Polytechnic Institute.
+This project presents the comparision of 4 techniques used for detecting a "Leprechaun soft toy" as a part of the RBE549 - Computer Vision course at Worcester Polytechnic Institute.
 
 Techniques used:
 1. Camshift
